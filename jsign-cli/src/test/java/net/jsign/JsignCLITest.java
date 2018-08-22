@@ -17,6 +17,7 @@
 package net.jsign;
 
 import java.io.File;
+import java.lang.reflect.InvocationTargetException;
 import java.net.ProxySelector;
 import java.security.InvalidParameterException;
 import java.security.Permission;
@@ -527,6 +528,24 @@ public class JsignCLITest {
             // expected
             assertTrue(e.getCause().getCause() instanceof ProviderException // JDK < 9
                     || e.getCause().getCause() instanceof InvalidParameterException); // JDK 9+
+        }
+    }
+
+    public void testExplicitCertificateChainOnlyOnSingleEntry() throws Exception {
+        try {
+            cli.execute("--keystore=target/test-classes/keystore.jks", "--alias=test", "--keypass=password",  "--certfile=target/test-classes/jsign-test-certificate-full-chain.spc", "" + targetFile);
+            fail("No exception thrown");
+        } catch (SignerException e) {
+            assertEquals("exception message", "Certificate chain from file can only be specified if certificate from keystore contains only 1 entry", e.getMessage());
+        }
+    }
+
+    public void testExplicitCertificateChainOnlyOnSingleEntryWhenFirst() throws Exception {
+        try {
+            cli.execute("--keystore=target/test-classes/keystore-no-chain.jks", "--alias=test", "--keypass=password",  "--certfile=target/test-classes/jsign-test-certificate-full-chain-reversed.spc", "" + targetFile);
+            fail("No exception thrown");
+        } catch (SignerException e) {
+            assertEquals("exception message", "Certificate chain in file does not match chain from keystore", e.getMessage());
         }
     }
 }
